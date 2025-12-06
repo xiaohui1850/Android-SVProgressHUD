@@ -2,6 +2,7 @@ package com.bigkoo.svprogresshuddemo;
 
 import android.app.Activity;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -46,6 +47,12 @@ public class MainActivity extends Activity {
     }
     public void showInfoWithStatus(View view){
         mSVProgressHUD.showInfoWithStatus("这是提示", SVProgressHUD.SVProgressHUDMaskType.None);
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mSVProgressHUD.dismissImmediately();
+            }
+        },500);
     }
     public void showSuccessWithStatus(View view){
         mSVProgressHUD.showSuccessWithStatus("恭喜，提交成功！");

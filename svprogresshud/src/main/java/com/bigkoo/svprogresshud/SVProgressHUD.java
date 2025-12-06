@@ -3,12 +3,14 @@ package com.bigkoo.svprogresshud;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
@@ -246,6 +248,12 @@ public class SVProgressHUD {
     }
 
     public void dismiss() {
+        cancelScheduledDismiss();
+        if(!isShowing() || rootView.getParent() == null || mSharedView.getParent() == null){
+            // View hierarchy already cleaned up, so skip the animation path
+            dismissImmediately();
+            return;
+        }
         if(isDismissing)return;
         isDismissing = true;
         //消失动画
@@ -255,15 +263,28 @@ public class SVProgressHUD {
     }
 
     public void dismissImmediately() {
+        cancelScheduledDismiss();
         mSharedView.dismiss();
-        rootView.removeView(mSharedView);
-        decorView.removeView(rootView);
+        ViewParent sharedParent = mSharedView.getParent();
+        if(sharedParent instanceof ViewGroup){
+            ((ViewGroup) sharedParent).removeView(mSharedView);
+        }
+
+        ViewParent rootParent = rootView.getParent();
+        if(rootParent instanceof ViewGroup){
+            ((ViewGroup) rootParent).removeView(rootView);
+        }
+
         isShowing = false;
         isDismissing = false;
         if(onDismissListener != null){
             onDismissListener.onDismiss(this);
         }
 
+    }
+
+    private void cancelScheduledDismiss(){
+        mHandler.removeCallbacksAndMessages(null);
     }
 
     public Animation getInAnimation() {
@@ -292,7 +313,7 @@ public class SVProgressHUD {
         }
     }
 
-    private Handler mHandler = new Handler() {
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
